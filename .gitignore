@@ -1,0 +1,6 @@
+
+notebooks/.ipynb_checkpoints/
+
+data/*.parquet
+.env
+.minio.sys/

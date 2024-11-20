@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  dremio:
+    platform: linux/x86_64
+    image: dremio/dremio-oss:24.3.2
+    ports:
+      - 9053:9047
+      - 31010:31010
+      - 32010:32010
+    container_name: dremio
+
+  minioserver:
+    image: quay.io/minio/minio:RELEASE.2024-02-06T21-36-22Z
+    ports:
+      - 9050:9000
+      - 9051:9001
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    container_name: minio
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+  
+  nessie:
+    image: projectnessie/nessie:0.76.6
+    container_name: nessie
+    ports:
+      - "19120:19120"
+
+  spark_notebook:
+    image: dinyes/spark_notebook:0.9
+    volumes:
+      - ./notebooks:/home/docker/code_artifacts
+      - ./data/:/home/docker/data
+    ports: 
+      - 9070:8888
+    env_file: .env
+    container_name: notebook
+    command: "/home/docker/.local/bin/jupyter-lab --notebook-dir=/home/docker/code_artifacts --NotebookApp.token='' --no-browser --allow-root --ip 0.0.0.0"
+    profiles:
+      - with_ipython_notebook
+
+networks:
+  default:
+    name: iceberg_env
+    driver: bridge
+
+volumes:
+  minio-data:
